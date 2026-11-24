@@ -292,6 +292,7 @@ const SoonListApp = {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('click', async () => {
+                    this.clearUrlGroupParam();
                     await AuthService.logout();
                 });
             }
@@ -509,6 +510,12 @@ const SoonListApp = {
         const url = new URL(window.location);
         url.searchParams.set('g', groupId);
         window.history.pushState({}, '', url);
+    },
+
+    clearUrlGroupParam() {
+        const url = new URL(window.location);
+        url.searchParams.delete('g');
+        window.history.replaceState({}, '', url);
     },
 
     async enterMainApp({ showNoticesPopup = false } = {}) {
