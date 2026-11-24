@@ -12,8 +12,8 @@
 
     <div class="app-shell">
 
-        <!-- PANTALLA 1: CREAR GRUPO -->
-        <section id="view-onboarding" class="view active">
+        <!-- PANTALLA 0: LOGIN CON GOOGLE -->
+        <section id="view-login" class="view active">
             <div class="onboarding-wrapper">
                 <div class="hero">
                     <div class="logo-circle">
@@ -21,7 +21,53 @@
                     </div>
                     <span class="pill-tag">Listas grupales · Cero spoilers</span>
                     <h1>SoonList</h1>
-                    <p>Crea un grupo, comparte enlace o QR y elegid regalos sin repetir ni arruinar la sorpresa.</p>
+                    <p id="login-subtitle">Inicia sesión con tu cuenta de Google para crear o gestionar tus listas de deseos sin spoilers.</p>
+                </div>
+
+                <div class="card text-center">
+                    <h2>Accede con tu cuenta</h2>
+                    <p class="modal-desc mb-16">Tu cuenta de Google vincula automáticamente tus grupos, listas y regalos elegidos en cualquier dispositivo.</p>
+                    <button type="button" id="btn-google-login" class="btn btn-google btn-block">
+                        <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/>
+                            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"/>
+                            <path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"/>
+                            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/>
+                        </svg>
+                        <span>Continuar con Google</span>
+                    </button>
+                    <p id="login-error" class="error-text mt-12 hidden"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 1: LOBBY DE USUARIO Y CREAR GRUPO -->
+        <section id="view-onboarding" class="view">
+            <div class="onboarding-wrapper">
+                <!-- Barra de cuenta Google conectada -->
+                <div class="google-account-bar">
+                    <div class="google-account-info">
+                        <div class="avatar-ring avatar-sm" id="lobby-user-avatar">U</div>
+                        <div class="google-account-text">
+                            <strong id="lobby-user-name">Usuario</strong>
+                            <span id="lobby-user-email">correo@gmail.com</span>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-logout-lobby" class="btn-leave-group" title="Cerrar sesión de Google">
+                        <i data-lucide="log-out"></i>
+                        <span>Salir</span>
+                    </button>
+                </div>
+
+                <div class="hero" style="padding-top: 8px;">
+                    <span class="pill-tag">Listas grupales · Cero spoilers</span>
+                    <h1>SoonList</h1>
+                    <p>Crea un grupo nuevo o entra en uno de tus grupos activos.</p>
+                </div>
+
+                <div id="saved-groups-onboarding" class="card mb-16 hidden">
+                    <h3>Tus grupos</h3>
+                    <div id="onboarding-groups-list" class="group-switcher-list"></div>
                 </div>
 
                 <div class="card">
@@ -32,48 +78,55 @@
                             <input type="text" id="group-name" placeholder="Ej. Navidad Familia 2026" required>
                         </div>
                         <div class="form-group">
-                            <label for="creator-name">Tu nombre</label>
+                            <label for="creator-name">Tu nombre visible en el grupo</label>
                             <input type="text" id="creator-name" placeholder="Ej. Carlos" required>
                         </div>
-                        <small class="helper-note">Se generará automáticamente tu código secreto de 6 dígitos al entrar.</small>
                         <button type="submit" class="btn btn-primary btn-block mt-12">
                             <i data-lucide="qr-code"></i>
                             <span>Crear grupo y obtener QR</span>
                         </button>
                     </form>
                 </div>
-
-                <div id="saved-groups-onboarding" class="card mt-16 hidden">
-                    <h3>Tus grupos guardados</h3>
-                    <div id="onboarding-groups-list" class="group-switcher-list"></div>
-                </div>
             </div>
         </section>
 
-        <!-- PANTALLA 2: ELEGIR PERFIL / UNIRSE CON CÓDIGO DE 6 DÍGITOS -->
-        <section id="view-auth" class="view">
+        <!-- PANTALLA 2: UNIRSE A UN GRUPO POR ENLACE DE INVITACIÓN -->
+        <section id="view-join-group" class="view">
             <div class="onboarding-wrapper">
-                <div class="header-simple">
-                    <span class="badge-group" id="auth-group-title">Grupo</span>
-                    <h2>¿Quién eres?</h2>
-                    <p>Entra con tu código de 6 dígitos o únete como nuevo miembro</p>
+                <div class="google-account-bar">
+                    <div class="google-account-info">
+                        <div class="avatar-ring avatar-sm" id="join-user-avatar">U</div>
+                        <div class="google-account-text">
+                            <strong id="join-user-name">Usuario</strong>
+                            <span id="join-user-email">correo@gmail.com</span>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-logout-join" class="btn-leave-group" title="Cambiar cuenta de Google">
+                        <i data-lucide="log-out"></i>
+                        <span>Salir</span>
+                    </button>
                 </div>
 
-                <div id="existing-members-list" class="member-selector-grid"></div>
-
-                <div class="divider"><span>O únete por primera vez</span></div>
+                <div class="header-simple">
+                    <span class="badge-group" id="join-members-count">Grupo</span>
+                    <h2 id="join-group-title">Nombre del grupo</h2>
+                    <p>Has recibido una invitación para unirte a este grupo</p>
+                </div>
 
                 <div class="card">
-                    <h3>Unirme al grupo</h3>
+                    <h3>Confirmar participación</h3>
                     <form id="form-join-group">
                         <div class="form-group">
-                            <label for="join-name">Tu nombre</label>
+                            <label for="join-name">Tu nombre visible en el grupo</label>
                             <input type="text" id="join-name" placeholder="Ej. Laura" required>
                         </div>
-                        <small class="helper-note">Recibirás un código secreto genérico de 6 dígitos al entrar.</small>
+                        <small class="helper-note">Se vinculará a tu cuenta de Google para mantener tus listas sincronizadas.</small>
                         <button type="submit" class="btn btn-primary btn-block mt-12">
-                            <i data-lucide="log-in"></i>
-                            <span>Entrar al grupo</span>
+                            <i data-lucide="user-plus"></i>
+                            <span>Unirme al grupo</span>
+                        </button>
+                        <button type="button" id="btn-cancel-join" class="btn btn-secondary btn-block mt-12">
+                            Volver a mis grupos
                         </button>
                     </form>
                 </div>
@@ -109,28 +162,29 @@
             <!-- Avisos secretos recibidos -->
             <div id="secret-notices-box" class="notices-stack hidden"></div>
 
-            <!-- Tarjeta de perfil con código secreto, Cambiar perfil y Salir del grupo -->
+            <!-- Tarjeta de perfil con datos de Google -->
             <section class="profile-summary">
-                <div class="avatar-ring">
-                    <span id="profile-avatar-initial">C</span>
-                </div>
+                <div class="avatar-ring" id="profile-avatar-box">C</div>
                 <div class="profile-meta">
                     <div class="profile-top-row">
                         <div class="name-and-code">
-                            <h1 id="profile-member-name">Carlos</h1>
-                            <span class="secret-code-pill" title="Tu código secreto genérico de 6 dígitos">
-                                <i data-lucide="key-round"></i>
-                                <span id="profile-secret-code">••••••</span>
+                            <div>
+                                <h1 id="profile-member-name">Carlos</h1>
+                                <span id="profile-member-email" class="profile-email-text">carlos@gmail.com</span>
+                            </div>
+                            <span class="google-verified-badge" title="Cuenta verificada con Google">
+                                <i data-lucide="shield-check"></i>
+                                <span>Google</span>
                             </span>
                         </div>
                         <div class="profile-actions-group">
-                            <button id="btn-switch-user" class="btn-switch-profile" title="Cambiar de usuario">
-                                <i data-lucide="arrow-left-right"></i>
-                                <span>Cambiar perfil</span>
-                            </button>
                             <button id="btn-leave-group" class="btn-leave-group" title="Salir del grupo y borrar mis datos aquí">
-                                <i data-lucide="log-out"></i>
+                                <i data-lucide="user-minus"></i>
                                 <span>Salir del grupo</span>
+                            </button>
+                            <button id="btn-logout-main" class="btn-switch-profile" title="Cerrar sesión de Google">
+                                <i data-lucide="log-out"></i>
+                                <span>Cerrar sesión</span>
                             </button>
                         </div>
                     </div>
@@ -193,7 +247,7 @@
 
             </main>
 
-            <!-- MENÚ INFERIOR: GRUPO, MI LISTA, +, A COMPRAR, INVITAR -->
+            <!-- MENÚ INFERIOR -->
             <nav class="bottom-nav">
                 <button class="nav-item active" data-target="tab-group">
                     <span class="nav-icon"><i data-lucide="users"></i></span>
@@ -257,28 +311,7 @@
             </div>
         </div>
 
-        <!-- POPUP 1: BIENVENIDA CON NOMBRE Y CÓDIGO GENERADO DE 6 DÍGITOS -->
-        <div id="modal-welcome-code" class="modal hidden">
-            <div class="modal-content text-center">
-                <div class="modal-badge-icon">
-                    <i data-lucide="key-round"></i>
-                </div>
-                <h3>¡Bienvenido/a, <span id="welcome-member-name">Usuario</span>!</h3>
-                <p class="modal-desc">Este es tu código secreto genérico de 6 dígitos. Guárdalo en otro sitio para entrar desde otro dispositivo o cambiar de perfil.</p>
-
-                <div class="code-copy-box">
-                    <span id="welcome-secret-code" class="generated-code-display">000000</span>
-                    <button type="button" id="btn-copy-welcome-code" class="btn btn-primary btn-sm">
-                        <i data-lucide="copy"></i>
-                        <span>Copiar código</span>
-                    </button>
-                </div>
-
-                <button type="button" class="btn btn-secondary btn-block mt-12" data-close-modal>Entendido</button>
-            </div>
-        </div>
-
-        <!-- POPUP 2: AVISO DISCRETO DE DESEO ELIMINADO -->
+        <!-- POPUP: AVISO DISCRETO DE DESEO ELIMINADO -->
         <div id="modal-secret-notice" class="modal hidden">
             <div class="modal-content text-center">
                 <div class="modal-badge-icon">
@@ -290,7 +323,7 @@
             </div>
         </div>
 
-        <!-- POPUP 3: CONFIRMACIÓN ELEGANTE -->
+        <!-- POPUP: CONFIRMACIÓN ELEGANTE -->
         <div id="modal-confirm" class="modal hidden">
             <div class="modal-content text-center">
                 <div class="modal-badge-icon danger-icon">
@@ -305,24 +338,7 @@
             </div>
         </div>
 
-        <!-- POPUP 4: VERIFICAR CÓDIGO DE 6 DÍGITOS -->
-        <div id="modal-pin" class="modal hidden">
-            <div class="modal-content">
-                <h3 id="pin-modal-title">Hola</h3>
-                <p class="modal-desc">Introduce tu código secreto genérico de 6 dígitos.</p>
-                <form id="form-verify-pin">
-                    <input type="hidden" id="pin-member-id">
-                    <input type="password" id="verify-pin-input" class="pin-input-large" maxlength="6" pattern="\d{6}" inputmode="numeric" placeholder="••••••" required>
-                    <p id="pin-error" class="error-text hidden">Código incorrecto. Inténtalo de nuevo.</p>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Entrar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- POPUP 5: EDITAR NOMBRE DEL GRUPO -->
+        <!-- POPUP: EDITAR NOMBRE DEL GRUPO -->
         <div id="modal-edit-group" class="modal hidden">
             <div class="modal-content">
                 <h3>Cambiar nombre del grupo</h3>
@@ -340,7 +356,7 @@
             </div>
         </div>
 
-        <!-- POPUP 6: CAMBIAR O CREAR GRUPO -->
+        <!-- POPUP: CAMBIAR O CREAR GRUPO -->
         <div id="modal-groups" class="modal hidden">
             <div class="modal-content">
                 <h3>Grupos</h3>
@@ -354,11 +370,11 @@
             </div>
         </div>
 
-        <!-- POPUP 7: COMPARTIR ENLACE Y QR -->
+        <!-- POPUP: COMPARTIR ENLACE Y QR -->
         <div id="modal-share" class="modal hidden">
             <div class="modal-content text-center">
                 <h3>Invitar al grupo</h3>
-                <p class="modal-desc">Escanea el QR o envía el enlace para unirse al grupo.</p>
+                <p class="modal-desc">Escanea el QR o envía el enlace para unirse con Google.</p>
                 <div id="qrcode-container" class="qr-box"></div>
                 <div class="share-link-box">
                     <input type="text" id="share-url-input" readonly>
@@ -368,7 +384,7 @@
             </div>
         </div>
 
-        <!-- POPUP 8: AÑADIR DESEO -->
+        <!-- POPUP: AÑADIR DESEO -->
         <div id="modal-add-wish" class="modal hidden">
             <div class="modal-content">
                 <h3>Nuevo deseo</h3>

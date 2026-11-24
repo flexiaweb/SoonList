@@ -1013,3 +1013,124 @@ svg.lucide {
         padding: 8px 6px 12px;
     }
 }
+.mb-16 { margin-bottom: 16px; }
+
+/* Botón Google */
+.btn-google {
+    background: var(--surface);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+    padding: 13px 18px;
+    font-size: 0.95rem;
+}
+.btn-google:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+}
+.google-icon {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+}
+
+/* Barra de cuenta Google en Lobby y Unirse */
+.google-account-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-soft);
+}
+.google-account-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+.google-account-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.google-account-text strong {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.google-account-text span {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Avatares con foto de Google */
+.avatar-ring {
+    overflow: hidden;
+}
+.avatar-ring.avatar-sm {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+}
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.profile-email-text {
+    display: block;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+.google-verified-badge {
+    background: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid #bce5d4;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.google-verified-badge svg.lucide { width: 12px; height: 12px; }
+
+/* Mini avatar en listas del grupo */
+.person-identity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.person-mini-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border);
+}
+.person-mini-avatar-fallback {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface-pastel);
+    color: var(--primary-dark);
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
