@@ -16,6 +16,7 @@ const SoonListApp = {
 
     init() {
         this.bindEvents();
+        this.switchView('view-loading');
         UIHelpers.refreshIcons();
 
         AuthService.onAuthChange(async (user) => {
