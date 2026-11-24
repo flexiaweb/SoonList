@@ -176,7 +176,7 @@ const SoonListApp = {
         UIHelpers.refreshIcons();
     },
 
-    openWishDetailModal(wishId) {
+    openWishDetailModal(wishId, { context = 'claim' } = {}) {
         const wish = (this.state.group.wishes || []).find(w => w.id === wishId);
         if (!wish) return;
 
@@ -199,8 +199,13 @@ const SoonListApp = {
             imgBox.onclick = null;
         }
 
-        document.getElementById('detail-wish-recipient').textContent =
-            `Para ${owner ? owner.name : 'Miembro'}`;
+        const recipientBadge = document.getElementById('detail-wish-recipient');
+        if (context === 'my-list') {
+            recipientBadge.textContent = 'Tu deseo · Secreto';
+        } else {
+            recipientBadge.textContent = `Para ${owner ? owner.name : 'Miembro'}`;
+        }
+
         document.getElementById('detail-wish-title').textContent = wish.title;
 
         const noteEl = document.getElementById('detail-wish-note');
@@ -222,29 +227,84 @@ const SoonListApp = {
         }
 
         const actionsEl = document.getElementById('detail-wish-actions');
-        actionsEl.innerHTML = `
-            <button type="button" class="btn ${wish.purchased ? 'btn-success' : 'btn-secondary'}" id="detail-btn-purchased">
-                <i data-lucide="${wish.purchased ? 'check-circle-2' : 'circle'}"></i>
-                <span>${wish.purchased ? 'Comprado' : 'Marcar comprado'}</span>
-            </button>
-            <button type="button" class="btn btn-soft-danger" id="detail-btn-unclaim">Soltar</button>
-        `;
+        actionsEl.innerHTML = '';
 
-        document.getElementById('detail-btn-purchased').addEventListener('click', async () => {
-            await GroupService.togglePurchased(this.state.groupId, wish.id);
-            this.openWishDetailModal(wish.id);
-        });
-
-        document.getElementById('detail-btn-unclaim').addEventListener('click', () => {
-            this.handleReleaseClaim(wish.id, {
-                onReleased: () => {
-                    document.getElementById('modal-wish-detail').classList.add('hidden');
-                }
+        if (context === 'my-list') {
+            actionsEl.innerHTML = `
+                <button type="button" class="btn btn-soft-danger btn-block" id="detail-btn-delete">
+                    <i data-lucide="trash-2"></i>
+                    <span>Borrar deseo</span>
+                </button>
+            `;
+            document.getElementById('detail-btn-delete').addEventListener('click', () => {
+                document.getElementById('modal-wish-detail').classList.add('hidden');
+                this.handleDeleteWish(wish.id);
             });
-        });
+        } else if (context === 'group') {
+            const isMine = wish.claimedByUid === this.state.user.uid;
+            const isTakenByOther = wish.claimedByUid !== null && !isMine;
+
+            if (isTakenByOther) {
+                actionsEl.innerHTML = `
+                    <span class="status-pill status-taken" style="width:100%; justify-content:center; padding:10px;">
+                        <i data-lucide="lock"></i> Ya elegido por otra persona
+                    </span>
+                `;
+            } else if (isMine) {
+                actionsEl.innerHTML = `
+                    <button type="button" class="btn btn-soft-danger btn-block" id="detail-btn-unclaim">Soltar regalo</button>
+                `;
+                document.getElementById('detail-btn-unclaim').addEventListener('click', () => {
+                    this.handleReleaseClaim(wish.id, {
+                        onReleased: () => {
+                            document.getElementById('modal-wish-detail').classList.add('hidden');
+                        }
+                    });
+                });
+            } else {
+                actionsEl.innerHTML = `
+                    <button type="button" class="btn btn-primary btn-block" id="detail-btn-claim">Elegir regalo</button>
+                `;
+                document.getElementById('detail-btn-claim').addEventListener('click', async () => {
+                    await GroupService.toggleClaimWish(this.state.groupId, wish.id, this.state.user.uid);
+                    this.openWishDetailModal(wish.id, { context: 'group' });
+                });
+            }
+        } else {
+            actionsEl.innerHTML = `
+                <button type="button" class="btn ${wish.purchased ? 'btn-success' : 'btn-secondary'}" id="detail-btn-purchased">
+                    <i data-lucide="${wish.purchased ? 'check-circle-2' : 'circle'}"></i>
+                    <span>${wish.purchased ? 'Comprado' : 'Marcar comprado'}</span>
+                </button>
+                <button type="button" class="btn btn-soft-danger" id="detail-btn-unclaim">Soltar</button>
+            `;
+
+            document.getElementById('detail-btn-purchased').addEventListener('click', async () => {
+                await GroupService.togglePurchased(this.state.groupId, wish.id);
+                this.openWishDetailModal(wish.id, { context: 'claim' });
+            });
+
+            document.getElementById('detail-btn-unclaim').addEventListener('click', () => {
+                this.handleReleaseClaim(wish.id, {
+                    onReleased: () => {
+                        document.getElementById('modal-wish-detail').classList.add('hidden');
+                    }
+                });
+            });
+        }
 
         UIHelpers.refreshIcons();
         document.getElementById('modal-wish-detail').classList.remove('hidden');
+    },
+
+    resetWishFilePicker() {
+        document.getElementById('wish-image').value = '';
+        document.getElementById('wish-file-label').textContent = 'Elegir archivo o foto';
+        document.getElementById('wish-file-sub').textContent = 'JPG, PNG o captura de pantalla';
+        const preview = document.getElementById('image-preview-box');
+        preview.innerHTML = '';
+        preview.classList.add('hidden');
+        this.state.pendingImageDataUrl = null;
     },
 
     openConfirmModal({ title, desc, onConfirm }) {
@@ -422,14 +482,21 @@ const SoonListApp = {
         // Añadir deseo
         document.getElementById('btn-open-add-wish').addEventListener('click', () => {
             document.getElementById('form-add-wish').reset();
-            document.getElementById('image-preview-box').classList.add('hidden');
-            this.state.pendingImageDataUrl = null;
+            this.resetWishFilePicker();
+            UIHelpers.refreshIcons();
             document.getElementById('modal-add-wish').classList.remove('hidden');
         });
 
         document.getElementById('wish-image').addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (!file) return;
+            if (!file) {
+                this.resetWishFilePicker();
+                return;
+            }
+            document.getElementById('wish-file-label').textContent = file.name;
+            const sizeKb = Math.max(1, Math.round(file.size / 1024));
+            document.getElementById('wish-file-sub').textContent = `${sizeKb} KB · Listo para adjuntar`;
+
             UIHelpers.compressImageForFirestore(file, (dataUrl) => {
                 this.state.pendingImageDataUrl = dataUrl;
                 const preview = document.getElementById('image-preview-box');
@@ -643,9 +710,10 @@ const SoonListApp = {
                     const isTakenByOther = wish.claimedByUid !== null && !isMine;
 
                     const tile = document.createElement('div');
-                    tile.className = `wish-tile ${isTakenByOther ? 'claimed-by-other' : ''}`;
+                    tile.className = `wish-tile claimable-card ${isTakenByOther ? 'claimed-by-other' : ''}`;
+                    tile.addEventListener('click', () => this.openWishDetailModal(wish.id, { context: 'group' }));
 
-                    let badgeHtml = 'Libre';
+                    let badgeHtml = `<i data-lucide="maximize-2"></i> Ver`;
                     if (isTakenByOther) badgeHtml = `<i data-lucide="lock"></i> Elegido`;
                     if (isMine) badgeHtml = `<i data-lucide="check"></i> Tuyo`;
 
@@ -655,11 +723,11 @@ const SoonListApp = {
                     } else if (isMine) {
                         actionHtml = `
                             <span class="status-pill status-mine"><i data-lucide="check"></i> Elegido</span>
-                            <button class="btn btn-soft-danger" onclick="SoonListApp.handleToggleClaim('${wish.id}')">Soltar</button>
+                            <button type="button" class="btn btn-soft-danger" onclick="event.stopPropagation(); SoonListApp.handleToggleClaim('${wish.id}')">Soltar</button>
                         `;
                     } else {
                         actionHtml = `
-                            <button class="btn btn-primary btn-block" style="padding:7px 10px; font-size:0.78rem;" onclick="SoonListApp.handleToggleClaim('${wish.id}')">Elegir</button>
+                            <button type="button" class="btn btn-primary btn-block" style="padding:7px 10px; font-size:0.78rem;" onclick="event.stopPropagation(); SoonListApp.handleToggleClaim('${wish.id}')">Elegir</button>
                         `;
                     }
 
@@ -673,7 +741,7 @@ const SoonListApp = {
                         <div class="wish-body">
                             <div class="wish-title">${UIHelpers.escapeHtml(wish.title)}</div>
                             ${wish.note ? `<div class="wish-note">${UIHelpers.escapeHtml(wish.note)}</div>` : ''}
-                            ${wish.url ? `<a href="${UIHelpers.escapeHtml(wish.url)}" target="_blank" rel="noopener noreferrer" class="wish-link"><i data-lucide="external-link"></i> Ver enlace</a>` : ''}
+                            ${wish.url ? `<a href="${UIHelpers.escapeHtml(wish.url)}" target="_blank" rel="noopener noreferrer" class="wish-link" onclick="event.stopPropagation()"><i data-lucide="external-link"></i> Ver enlace</a>` : ''}
                             <div class="wish-actions">${actionHtml}</div>
                         </div>
                     `;
@@ -710,21 +778,23 @@ const SoonListApp = {
 
         myWishes.forEach(wish => {
             const tile = document.createElement('div');
-            tile.className = 'wish-tile';
+            tile.className = 'wish-tile claimable-card';
+            tile.addEventListener('click', () => this.openWishDetailModal(wish.id, { context: 'my-list' }));
+
             tile.innerHTML = `
                 <div class="wish-thumb-wrap">
                     ${wish.imageDataUrl
                         ? `<img src="${wish.imageDataUrl}" class="wish-thumb" alt="${UIHelpers.escapeHtml(wish.title)}" loading="lazy">`
                         : `<span class="wish-placeholder-icon"><i data-lucide="sparkles"></i></span>`}
-                    <span class="wish-corner-tag"><i data-lucide="eye-off"></i> Secreto</span>
+                    <span class="wish-corner-tag"><i data-lucide="maximize-2"></i> Ver</span>
                 </div>
                 <div class="wish-body">
                     <div class="wish-title">${UIHelpers.escapeHtml(wish.title)}</div>
                     ${wish.note ? `<div class="wish-note">${UIHelpers.escapeHtml(wish.note)}</div>` : ''}
-                    ${wish.url ? `<a href="${UIHelpers.escapeHtml(wish.url)}" target="_blank" rel="noopener noreferrer" class="wish-link"><i data-lucide="external-link"></i> Ver enlace</a>` : ''}
+                    ${wish.url ? `<a href="${UIHelpers.escapeHtml(wish.url)}" target="_blank" rel="noopener noreferrer" class="wish-link" onclick="event.stopPropagation()"><i data-lucide="external-link"></i> Ver enlace</a>` : ''}
                     <div class="wish-actions">
                         <span class="section-sub">Oculto</span>
-                        <button class="btn btn-soft-danger" onclick="SoonListApp.handleDeleteWish('${wish.id}')">Borrar</button>
+                        <button type="button" class="btn btn-soft-danger" onclick="event.stopPropagation(); SoonListApp.handleDeleteWish('${wish.id}')">Borrar</button>
                     </div>
                 </div>
             `;
@@ -765,7 +835,7 @@ const SoonListApp = {
             const owner = (this.state.group.members || []).find(m => m.uid === wish.ownerUid);
             const tile = document.createElement('div');
             tile.className = 'wish-tile claimable-card';
-            tile.addEventListener('click', () => this.openWishDetailModal(wish.id));
+            tile.addEventListener('click', () => this.openWishDetailModal(wish.id, { context: 'claim' }));
 
             tile.innerHTML = `
                 <div class="wish-thumb-wrap">
