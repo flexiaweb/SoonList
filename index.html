@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SoonList - Listas de deseos sin spoilers</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <div class="app-shell">
+
+        <!-- PANTALLA 1: CREAR GRUPO -->
+        <section id="view-onboarding" class="view active">
+            <div class="onboarding-wrapper">
+                <div class="hero">
+                    <div class="logo-circle">
+                        <i data-lucide="gift"></i>
+                    </div>
+                    <span class="pill-tag">Listas grupales · Cero spoilers</span>
+                    <h1>SoonList</h1>
+                    <p>Crea un grupo, comparte enlace o QR y elegid regalos sin repetir ni arruinar la sorpresa.</p>
+                </div>
+
+                <div class="card">
+                    <h2>Crear un nuevo grupo</h2>
+                    <form id="form-create-group">
+                        <div class="form-group">
+                            <label for="group-name">Nombre del grupo o evento</label>
+                            <input type="text" id="group-name" placeholder="Ej. Navidad Familia 2026" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="creator-name">Tu nombre</label>
+                            <input type="text" id="creator-name" placeholder="Ej. Carlos" required>
+                        </div>
+                        <small class="helper-note">Se generará automáticamente tu código secreto de 6 dígitos al entrar.</small>
+                        <button type="submit" class="btn btn-primary btn-block mt-12">
+                            <i data-lucide="qr-code"></i>
+                            <span>Crear grupo y obtener QR</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div id="saved-groups-onboarding" class="card mt-16 hidden">
+                    <h3>Tus grupos guardados</h3>
+                    <div id="onboarding-groups-list" class="group-switcher-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 2: ELEGIR PERFIL / UNIRSE CON CÓDIGO DE 6 DÍGITOS -->
+        <section id="view-auth" class="view">
+            <div class="onboarding-wrapper">
+                <div class="header-simple">
+                    <span class="badge-group" id="auth-group-title">Grupo</span>
+                    <h2>¿Quién eres?</h2>
+                    <p>Entra con tu código de 6 dígitos o únete como nuevo miembro</p>
+                </div>
+
+                <div id="existing-members-list" class="member-selector-grid"></div>
+
+                <div class="divider"><span>O únete por primera vez</span></div>
+
+                <div class="card">
+                    <h3>Unirme al grupo</h3>
+                    <form id="form-join-group">
+                        <div class="form-group">
+                            <label for="join-name">Tu nombre</label>
+                            <input type="text" id="join-name" placeholder="Ej. Laura" required>
+                        </div>
+                        <small class="helper-note">Recibirás un código secreto genérico de 6 dígitos al entrar.</small>
+                        <button type="submit" class="btn btn-primary btn-block mt-12">
+                            <i data-lucide="log-in"></i>
+                            <span>Entrar al grupo</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 3: APLICACIÓN PRINCIPAL -->
+        <section id="view-main" class="view main-view-clean">
+            <!-- Barra superior -->
+            <header class="top-utility-bar">
+                <div class="brand-mini">
+                    <span class="brand-dot">
+                        <i data-lucide="cloud"></i>
+                    </span>
+                    <span id="header-group-name" class="group-title-top">Grupo</span>
+                    <button id="btn-edit-group-name" class="icon-btn-tiny" title="Cambiar nombre del grupo">
+                        <i data-lucide="pencil"></i>
+                    </button>
+                </div>
+
+                <div class="top-actions">
+                    <button id="btn-open-group-switcher" class="pill-action" title="Cambiar o crear grupo">
+                        <i data-lucide="folder-sync"></i>
+                        <span>Grupos</span>
+                    </button>
+                    <button id="btn-delete-group" class="pill-action pill-action-danger hidden" title="Eliminar grupo completo">
+                        <i data-lucide="trash-2"></i>
+                        <span>Eliminar grupo</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Avisos secretos recibidos -->
+            <div id="secret-notices-box" class="notices-stack hidden"></div>
+
+            <!-- Tarjeta de perfil con código secreto, Cambiar perfil y Salir del grupo -->
+            <section class="profile-summary">
+                <div class="avatar-ring">
+                    <span id="profile-avatar-initial">C</span>
+                </div>
+                <div class="profile-meta">
+                    <div class="profile-top-row">
+                        <div class="name-and-code">
+                            <h1 id="profile-member-name">Carlos</h1>
+                            <span class="secret-code-pill" title="Tu código secreto genérico de 6 dígitos">
+                                <i data-lucide="key-round"></i>
+                                <span id="profile-secret-code">••••••</span>
+                            </span>
+                        </div>
+                        <div class="profile-actions-group">
+                            <button id="btn-switch-user" class="btn-switch-profile" title="Cambiar de usuario">
+                                <i data-lucide="arrow-left-right"></i>
+                                <span>Cambiar perfil</span>
+                            </button>
+                            <button id="btn-leave-group" class="btn-leave-group" title="Salir del grupo y borrar mis datos aquí">
+                                <i data-lucide="log-out"></i>
+                                <span>Salir del grupo</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <strong id="stat-my-wishes">0</strong>
+                            <span>Deseos</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong id="stat-reserved-on-me">0</strong>
+                            <span>Elegidos</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong id="stat-members-count">1</strong>
+                            <span>Miembros</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONTENIDO DE PESTAÑAS -->
+            <main class="tab-content">
+
+                <!-- PESTAÑA 1: GRUPO -->
+                <div id="tab-group" class="tab-pane active">
+                    <div class="section-heading">
+                        <h2>Grupo</h2>
+                        <span class="section-sub">Reserva sin que el dueño lo sepa</span>
+                    </div>
+                    <div id="group-lists-container"></div>
+                </div>
+
+                <!-- PESTAÑA 2: MI LISTA -->
+                <div id="tab-my-list" class="tab-pane">
+                    <div class="secret-banner">
+                        <span class="secret-icon">
+                            <i data-lucide="eye-off"></i>
+                        </span>
+                        <div>
+                            <strong id="my-reserved-count">0 de 0 deseos elegidos</strong>
+                            <p>Ves el total, pero nunca sabrás qué regalo es ni quién lo eligió.</p>
+                        </div>
+                    </div>
+
+                    <div class="section-heading">
+                        <h2>Mi lista</h2>
+                        <span class="section-sub">Enlaces, notas o capturas</span>
+                    </div>
+                    <div id="my-wishes-container"></div>
+                </div>
+
+                <!-- PESTAÑA 3: A COMPRAR -->
+                <div id="tab-my-claims" class="tab-pane">
+                    <div class="section-heading">
+                        <h2>A comprar</h2>
+                        <span class="section-sub">Pulsa un artículo para verlo en grande</span>
+                    </div>
+                    <div id="my-claims-container"></div>
+                </div>
+
+            </main>
+
+            <!-- MENÚ INFERIOR: GRUPO, MI LISTA, +, A COMPRAR, INVITAR -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" data-target="tab-group">
+                    <span class="nav-icon"><i data-lucide="users"></i></span>
+                    <span class="nav-label">Grupo</span>
+                </button>
+
+                <button class="nav-item" data-target="tab-my-list">
+                    <span class="nav-icon"><i data-lucide="sparkles"></i></span>
+                    <span class="nav-label">Mi lista</span>
+                </button>
+
+                <button id="btn-open-add-wish" class="nav-fab" title="Añadir deseo">
+                    <i data-lucide="plus"></i>
+                </button>
+
+                <button class="nav-item" data-target="tab-my-claims">
+                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span>
+                    <span class="nav-label">A comprar</span>
+                    <span id="claims-badge" class="nav-badge hidden">0</span>
+                </button>
+
+                <button class="nav-item" id="btn-nav-share">
+                    <span class="nav-icon"><i data-lucide="share-2"></i></span>
+                    <span class="nav-label">Invitar</span>
+                </button>
+            </nav>
+        </section>
+
+        <!-- POPUP DETALLE DE ARTÍCULO EN GRANDE (A COMPRAR) -->
+        <div id="modal-wish-detail" class="modal hidden">
+            <div class="modal-content modal-detail-card">
+                <div id="detail-image-box" class="detail-image-wrap hidden" title="Pulsa para ampliar imagen">
+                    <img id="detail-wish-image" src="" alt="Imagen del deseo">
+                    <button type="button" id="btn-zoom-detail-image" class="detail-zoom-btn" title="Ampliar imagen completa">
+                        <i data-lucide="zoom-in"></i>
+                        <span>Ampliar</span>
+                    </button>
+                </div>
+                <div class="detail-body">
+                    <span id="detail-wish-recipient" class="person-count-badge">Para alguien</span>
+                    <h3 id="detail-wish-title" class="detail-title">Título</h3>
+                    <p id="detail-wish-note" class="detail-note hidden"></p>
+                    <a id="detail-wish-url" href="#" target="_blank" rel="noopener noreferrer" class="detail-link-btn hidden">
+                        <i data-lucide="external-link"></i>
+                        <span>Abrir enlace del artículo</span>
+                    </a>
+                    <div id="detail-wish-actions" class="modal-actions"></div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-block mt-12" data-close-modal>Cerrar</button>
+            </div>
+        </div>
+
+        <!-- VISOR DE IMAGEN COMPLETA (LIGHTBOX) -->
+        <div id="modal-image-lightbox" class="modal lightbox-modal hidden">
+            <div class="lightbox-inner">
+                <button type="button" id="btn-close-lightbox" class="lightbox-close-btn" title="Cerrar imagen completa">
+                    <i data-lucide="x"></i>
+                </button>
+                <img id="lightbox-full-image" src="" alt="Vista completa del artículo">
+                <p id="lightbox-caption" class="lightbox-caption"></p>
+            </div>
+        </div>
+
+        <!-- POPUP 1: BIENVENIDA CON NOMBRE Y CÓDIGO GENERADO DE 6 DÍGITOS -->
+        <div id="modal-welcome-code" class="modal hidden">
+            <div class="modal-content text-center">
+                <div class="modal-badge-icon">
+                    <i data-lucide="key-round"></i>
+                </div>
+                <h3>¡Bienvenido/a, <span id="welcome-member-name">Usuario</span>!</h3>
+                <p class="modal-desc">Este es tu código secreto genérico de 6 dígitos. Guárdalo en otro sitio para entrar desde otro dispositivo o cambiar de perfil.</p>
+
+                <div class="code-copy-box">
+                    <span id="welcome-secret-code" class="generated-code-display">000000</span>
+                    <button type="button" id="btn-copy-welcome-code" class="btn btn-primary btn-sm">
+                        <i data-lucide="copy"></i>
+                        <span>Copiar código</span>
+                    </button>
+                </div>
+
+                <button type="button" class="btn btn-secondary btn-block mt-12" data-close-modal>Entendido</button>
+            </div>
+        </div>
+
+        <!-- POPUP 2: AVISO DISCRETO DE DESEO ELIMINADO -->
+        <div id="modal-secret-notice" class="modal hidden">
+            <div class="modal-content text-center">
+                <div class="modal-badge-icon">
+                    <i data-lucide="bell-ring"></i>
+                </div>
+                <h3>Aviso discreto</h3>
+                <p id="popup-notice-message" class="modal-desc notice-popup-text"></p>
+                <button type="button" id="btn-confirm-secret-notice" class="btn btn-primary btn-block mt-16">Entendido</button>
+            </div>
+        </div>
+
+        <!-- POPUP 3: CONFIRMACIÓN ELEGANTE -->
+        <div id="modal-confirm" class="modal hidden">
+            <div class="modal-content text-center">
+                <div class="modal-badge-icon danger-icon">
+                    <i data-lucide="trash-2"></i>
+                </div>
+                <h3 id="confirm-modal-title">Confirmar acción</h3>
+                <p id="confirm-modal-desc" class="modal-desc">¿Seguro que quieres continuar?</p>
+                <div class="modal-actions">
+                    <button type="button" id="btn-cancel-confirm" class="btn btn-secondary">Cancelar</button>
+                    <button type="button" id="btn-accept-confirm" class="btn btn-danger">Confirmar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- POPUP 4: VERIFICAR CÓDIGO DE 6 DÍGITOS -->
+        <div id="modal-pin" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="pin-modal-title">Hola</h3>
+                <p class="modal-desc">Introduce tu código secreto genérico de 6 dígitos.</p>
+                <form id="form-verify-pin">
+                    <input type="hidden" id="pin-member-id">
+                    <input type="password" id="verify-pin-input" class="pin-input-large" maxlength="6" pattern="\d{6}" inputmode="numeric" placeholder="••••••" required>
+                    <p id="pin-error" class="error-text hidden">Código incorrecto. Inténtalo de nuevo.</p>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Entrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- POPUP 5: EDITAR NOMBRE DEL GRUPO -->
+        <div id="modal-edit-group" class="modal hidden">
+            <div class="modal-content">
+                <h3>Cambiar nombre del grupo</h3>
+                <p class="modal-desc">El nuevo nombre se actualizará para todos los miembros.</p>
+                <form id="form-edit-group-name">
+                    <div class="form-group mt-12">
+                        <label for="edit-group-name-input">Nombre del grupo</label>
+                        <input type="text" id="edit-group-name-input" required>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- POPUP 6: CAMBIAR O CREAR GRUPO -->
+        <div id="modal-groups" class="modal hidden">
+            <div class="modal-content">
+                <h3>Grupos</h3>
+                <p class="modal-desc">Cambia a otro grupo existente o crea uno nuevo.</p>
+                <div id="modal-groups-list" class="group-switcher-list mt-12"></div>
+                <button id="btn-create-new-group-from-modal" type="button" class="btn btn-primary btn-block mt-12">
+                    <i data-lucide="folder-plus"></i>
+                    <span>Crear nuevo grupo</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-block mt-12" data-close-modal>Cerrar</button>
+            </div>
+        </div>
+
+        <!-- POPUP 7: COMPARTIR ENLACE Y QR -->
+        <div id="modal-share" class="modal hidden">
+            <div class="modal-content text-center">
+                <h3>Invitar al grupo</h3>
+                <p class="modal-desc">Escanea el QR o envía el enlace para unirse al grupo.</p>
+                <div id="qrcode-container" class="qr-box"></div>
+                <div class="share-link-box">
+                    <input type="text" id="share-url-input" readonly>
+                    <button id="btn-copy-link" class="btn btn-primary">Copiar</button>
+                </div>
+                <button type="button" class="btn btn-secondary btn-block mt-12" data-close-modal>Cerrar</button>
+            </div>
+        </div>
+
+        <!-- POPUP 8: AÑADIR DESEO -->
+        <div id="modal-add-wish" class="modal hidden">
+            <div class="modal-content">
+                <h3>Nuevo deseo</h3>
+                <form id="form-add-wish">
+                    <div class="form-group">
+                        <label for="wish-title">¿Qué te gustaría? *</label>
+                        <input type="text" id="wish-title" placeholder="Ej. Auriculares inalámbricos" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="wish-url">Enlace del producto (opcional)</label>
+                        <input type="url" id="wish-url" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="wish-image">Captura o foto (opcional)</label>
+                        <input type="file" id="wish-image" accept="image/*">
+                        <div id="image-preview-box" class="image-preview hidden"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="wish-note">Nota, talla o detalle (opcional)</label>
+                        <textarea id="wish-note" rows="2" placeholder="Ej. Color azul claro o plata"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
